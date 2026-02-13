@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import Link from "next/link";
+import { supabase } from "@/lib/supabase";
 import NavBar from "@/components/NavBar";
 import Footer from "@/components/Footer";
 import Image from "next/image";
@@ -16,7 +17,31 @@ const colors = [
 ];
 
 export default function BuyPage() {
+    const router = useRouter();
     const [selectedColor, setSelectedColor] = useState(colors[0]);
+    const [isLoading, setIsLoading] = useState(false);
+
+    const handleAddToBag = async () => {
+        setIsLoading(true);
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            const bagUrl = `/bag?color=${encodeURIComponent(selectedColor.name)}`;
+
+            if (user) {
+                // User is logged in, proceed to bag
+                router.push(bagUrl);
+            } else {
+                // User is not logged in, redirect to login
+                router.push(`/login?next=${encodeURIComponent(bagUrl)}`);
+            }
+        } catch (error) {
+            console.error("Auth check failed:", error);
+            // Fallback to login
+            router.push(`/login?next=${encodeURIComponent(`/bag?color=${encodeURIComponent(selectedColor.name)}`)}`);
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     return (
         <main className="min-h-screen bg-black text-white selection:bg-apple-blue selection:text-white pt-24">
@@ -142,12 +167,13 @@ export default function BuyPage() {
                             </div>
 
                             <div className="flex gap-4 pt-6">
-                                <Link
-                                    href={`/bag?color=${encodeURIComponent(selectedColor.name)}`}
-                                    className="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-semibold py-4 rounded-xl transition-all hover:scale-[1.02] shadow-[0_0_20px_rgba(37,99,235,0.3)] text-center flex items-center justify-center"
+                                <button
+                                    onClick={handleAddToBag}
+                                    disabled={isLoading}
+                                    className="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-semibold py-4 rounded-xl transition-all hover:scale-[1.02] shadow-[0_0_20px_rgba(37,99,235,0.3)] text-center flex items-center justify-center disabled:opacity-50 disabled:hover:scale-100"
                                 >
-                                    Add to Bag
-                                </Link>
+                                    {isLoading ? "Checking..." : "Add to Bag"}
+                                </button>
                                 <button className="px-4 py-4 rounded-xl border border-white/10 hover:bg-white/5 transition-colors">
                                     <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />

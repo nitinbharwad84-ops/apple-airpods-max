@@ -5,11 +5,13 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/lib/supabase";
 
 export default function NavBar() {
     const { scrollY } = useScroll();
     const [isScrolled, setIsScrolled] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [user, setUser] = useState<any>(null);
     const pathname = usePathname();
 
     useEffect(() => {
@@ -17,6 +19,27 @@ export default function NavBar() {
             setIsScrolled(latest > 20);
         });
     }, [scrollY]);
+
+    useEffect(() => {
+        const getUser = async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            setUser(user);
+        };
+        getUser();
+
+        const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+            setUser(session?.user ?? null);
+        });
+
+        return () => {
+            authListener.subscription.unsubscribe();
+        };
+    }, []);
+
+    const handleLogout = async () => {
+        await supabase.auth.signOut();
+        // optionally redirect or refresh, but state update handles UI
+    };
 
     const navLinks = [
         { name: "Overview", href: "/" },
@@ -69,9 +92,28 @@ export default function NavBar() {
                             )}
                         </Link>
                     ))}
-                    <Link href="/buy" className="bg-white text-black px-5 py-1.5 rounded-full font-semibold hover:scale-105 transition-transform duration-200 hover:shadow-[0_0_20px_rgba(255,255,255,0.3)]">
-                        Buy
-                    </Link>
+
+                    {/* Auth State UI */}
+                    {user ? (
+                        <div className="flex items-center gap-4">
+                            <span className="text-neutral-400 truncate max-w-[150px]">{user.email}</span>
+                            <button onClick={handleLogout} className="text-white hover:text-white/70 transition-colors">
+                                Sign Out
+                            </button>
+                            <Link href="/buy" className="bg-white text-black px-5 py-1.5 rounded-full font-semibold hover:scale-105 transition-transform duration-200 hover:shadow-[0_0_20px_rgba(255,255,255,0.3)]">
+                                Buy
+                            </Link>
+                        </div>
+                    ) : (
+                        <div className="flex items-center gap-4">
+                            <Link href="/login" className="text-neutral-400 hover:text-white transition-colors">
+                                Sign In
+                            </Link>
+                            <Link href="/buy" className="bg-white text-black px-5 py-1.5 rounded-full font-semibold hover:scale-105 transition-transform duration-200 hover:shadow-[0_0_20px_rgba(255,255,255,0.3)]">
+                                Buy
+                            </Link>
+                        </div>
+                    )}
                 </div>
 
                 {/* Mobile Menu Toggle */}
@@ -107,8 +149,28 @@ export default function NavBar() {
                                     {link.name}
                                 </Link>
                             ))}
+
+                            {/* Mobile Auth UI */}
+                            {user ? (
+                                <>
+                                    <div className="text-sm text-neutral-400 border-b border-white/10 pb-4">{user.email}</div>
+                                    <button onClick={() => { handleLogout(); setIsMobileMenuOpen(false); }} className="text-ledft text-neutral-400 hover:text-white border-b border-white/10 pb-4">
+                                        Sign Out
+                                    </button>
+                                </>
+                            ) : (
+                                <Link
+                                    href="/login"
+                                    onClick={() => setIsMobileMenuOpen(false)}
+                                    className="text-neutral-500 hover:text-white border-b border-white/10 pb-4"
+                                >
+                                    Sign In
+                                </Link>
+                            )}
+
                             <Link
                                 href="/buy"
+                                onClick={() => setIsMobileMenuOpen(false)}
                                 className="inline-block bg-white text-black px-6 py-3 rounded-full text-center mt-4"
                             >
                                 Buy AirPods Max
