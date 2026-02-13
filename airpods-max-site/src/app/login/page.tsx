@@ -16,18 +16,22 @@ function LoginForm() {
     const [otp, setOtp] = useState("");
     const [password, setPassword] = useState("");
     const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState("");
+    const [error, setError] = useState<string | React.ReactNode>("");
 
     useEffect(() => {
         // Check if user is already logged in or comes back from Magic Link
         const checkUser = async () => {
             const { data: { user } } = await supabase.auth.getUser();
             if (user) {
-                // If user is logged in, we assume they verified successfully.
-                // We move to the password creation step to fulfill the requirement.
-                // In a real app, you might check if they already have a password set,
-                // but for this flow we'll offer to set/reset it.
-                setStep("password");
+                // If user is logged in:
+                // 1. If they have a 'code' in URL, it means they just clicked a Magic Link -> Set Password.
+                // 2. Otherwise, they are just returning -> Redirect to Store (don't force password reset).
+                const hasCode = searchParams?.get("code");
+                if (hasCode) {
+                    setStep("password");
+                } else {
+                    router.replace(nextUrl);
+                }
             }
         };
         checkUser();
@@ -35,14 +39,20 @@ function LoginForm() {
         // Listen for auth changes (e.g. clicking Magic Link in another tab, or same tab redirect)
         const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
             if (event === "SIGNED_IN" && session) {
-                setStep("password");
+                // If sign in happens via event (e.g. implicit flow or cross-tab), check if we should prompt
+                // For simplicity, we default to password step if it's an explicit SIGN_IN event
+                // but we rely on the checkUser for the initial load redirect.
+                // We keep this just in case, but the redirect above is the primary fix.
+                if (searchParams?.get("code")) {
+                    setStep("password");
+                }
             }
         });
 
         return () => {
             authListener.subscription.unsubscribe();
         };
-    }, []);
+    }, [searchParams, router, nextUrl]);
 
     const handleSendOtp = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -54,8 +64,6 @@ function LoginForm() {
                 email,
                 options: {
                     shouldCreateUser: true,
-                    // If they click the link, ensure they come back here to finish the flow
-                    emailRedirectTo: typeof window !== 'undefined' ? window.location.href : undefined,
                 },
             });
 
@@ -65,7 +73,22 @@ function LoginForm() {
             console.error("Error sending OTP:", err);
             const msg = (err.message || "").toLowerCase();
             if (msg.includes("rate limit") || msg.includes("too many requests")) {
-                setError("Rate limit exceeded. Please wait a moment, check your spam for existing links, or try a different email (e.g. yourname+test@gmail.com).");
+                setError(
+                    <span>
+                        Rate limit hit.{" "}
+                        <button
+                            onClick={() => {
+                                const alias = email.split('@')[0] + "+test" + Math.floor(Math.random() * 1000) + "@" + email.split('@')[1];
+                                setEmail(alias);
+                                setTimeout(() => document.querySelector('form')?.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true })), 100);
+                            }}
+                            className="underline text-white font-bold hover:text-blue-400"
+                        >
+                            Click here to try with a test alias
+                        </button>
+                        {" "}to bypass it instantly.
+                    </span> as any
+                );
             } else {
                 setError(err.message || "Failed to submit email.");
             }
@@ -171,7 +194,7 @@ function LoginForm() {
                                 disabled={isLoading}
                                 className="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-4 rounded-xl transition-all disabled:opacity-50"
                             >
-                                {isLoading ? "Sending..." : "Continue"}
+                                {isLoading ? "Sending..." : "Send Verification Code"}
                             </button>
                         </motion.form>
                     )}
@@ -189,7 +212,7 @@ function LoginForm() {
                                 <input
                                     type="text"
                                     required
-                                    placeholder="6-Digit Code"
+                                    placeholder="Enter 8-Digit Code"
                                     value={otp}
                                     onChange={(e) => setOtp(e.target.value)}
                                     className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-4 text-white placeholder:text-white/30 focus:outline-none focus:border-blue-500 text-center tracking-widest text-lg transition-colors"
