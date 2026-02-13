@@ -82,3 +82,94 @@ body {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
+
+/* ===== GLOBAL CURSOR FIX ===== */
+button,
+a,
+[role="button"],
+select,
+label[for],
+input[type="checkbox"],
+input[type="radio"],
+input[type="submit"],
+input[type="button"],
+summary,
+.cursor-pointer {
+  cursor: pointer !important;
+}
+
+/* Ensure all clickable table rows and interactive elements */
+tr[onclick],
+tr:has(button),
+[data-clickable],
+.hover\:bg-white\/5,
+.hover\:bg-white\/10,
+.hover\:bg-white\/\[0\.02\] {
+  cursor: pointer;
+}
+
+/* Input fields get text cursor */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="search"],
+input[type="tel"],
+input[type="url"],
+input[type="date"],
+textarea {
+  cursor: text;
+}
+
+/* Disabled elements */
+button:disabled,
+input:disabled,
+select:disabled,
+textarea:disabled {
+  cursor: not-allowed !important;
+  opacity: 0.5;
+}
+
+/* ===== ADMIN THEME SYSTEM ===== */
+[data-admin-theme="dark"] {
+  --admin-bg: #0a0a0a;
+  --admin-bg-secondary: #111111;
+  --admin-bg-tertiary: #1a1a1a;
+  --admin-border: rgba(255, 255, 255, 0.05);
+  --admin-border-hover: rgba(255, 255, 255, 0.1);
+  --admin-text: #ffffff;
+  --admin-text-secondary: rgba(255, 255, 255, 0.6);
+  --admin-text-muted: rgba(255, 255, 255, 0.3);
+  --admin-card: rgba(255, 255, 255, 0.03);
+  --admin-card-hover: rgba(255, 255, 255, 0.05);
+  --admin-input: rgba(255, 255, 255, 0.05);
+  --admin-input-border: rgba(255, 255, 255, 0.1);
+  --admin-modal-bg: #1a1a1a;
+  --admin-modal-overlay: rgba(0, 0, 0, 0.6);
+  --admin-select-bg: #171717;
+}
+
+[data-admin-theme="light"] {
+  --admin-bg: #f5f5f7;
+  --admin-bg-secondary: #ffffff;
+  --admin-bg-tertiary: #ffffff;
+  --admin-border: rgba(0, 0, 0, 0.08);
+  --admin-border-hover: rgba(0, 0, 0, 0.15);
+  --admin-text: #1d1d1f;
+  --admin-text-secondary: rgba(0, 0, 0, 0.55);
+  --admin-text-muted: rgba(0, 0, 0, 0.3);
+  --admin-card: rgba(0, 0, 0, 0.02);
+  --admin-card-hover: rgba(0, 0, 0, 0.04);
+  --admin-input: rgba(0, 0, 0, 0.04);
+  --admin-input-border: rgba(0, 0, 0, 0.12);
+  --admin-modal-bg: #ffffff;
+  --admin-modal-overlay: rgba(0, 0, 0, 0.4);
+  --admin-select-bg: #f5f5f7;
+}
+
+/* Smooth transitions for theme switches */
+[data-admin-theme] * {
+  transition-property: background-color, border-color, color;
+  transition-duration: 0.2s;
+  transition-timing-function: ease;
+}
