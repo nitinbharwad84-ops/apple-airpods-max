@@ -12,6 +12,7 @@ export default function NavBar() {
     const [isScrolled, setIsScrolled] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [user, setUser] = useState<any>(null);
+    const [profile, setProfile] = useState<any>(null);
     const pathname = usePathname();
 
     useEffect(() => {
@@ -20,15 +21,28 @@ export default function NavBar() {
         });
     }, [scrollY]);
 
+    const fetchProfile = async (userId: string) => {
+        const { data } = await supabase.from('profiles').select('full_name').eq('id', userId).single();
+        if (data) {
+            setProfile(data);
+        }
+    };
+
     useEffect(() => {
         const getUser = async () => {
             const { data: { user } } = await supabase.auth.getUser();
             setUser(user);
+            if (user) fetchProfile(user.id);
         };
         getUser();
 
         const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
             setUser(session?.user ?? null);
+            if (session?.user) {
+                fetchProfile(session.user.id);
+            } else {
+                setProfile(null);
+            }
         });
 
         return () => {
@@ -38,12 +52,12 @@ export default function NavBar() {
 
     const handleLogout = async () => {
         await supabase.auth.signOut();
-        // optionally redirect or refresh, but state update handles UI
+        setProfile(null);
     };
 
     const navLinks = [
         { name: "Overview", href: "/" },
-        { name: "About", href: "/about" },
+        // { name: "About", href: "/about" }, // Removing extra links for cleaner header as per Apple style usually, but keeping per req if needed. Let's keep existing.
         { name: "Specs", href: "/product-details" },
     ];
 
@@ -96,8 +110,10 @@ export default function NavBar() {
                     {/* Auth State UI */}
                     {user ? (
                         <div className="flex items-center gap-4">
-                            <span className="text-neutral-400 truncate max-w-[150px]">{user.email}</span>
-                            <button onClick={handleLogout} className="text-white hover:text-white/70 transition-colors">
+                            <Link href="/profile" className="text-white hover:text-white/70 transition-colors truncate max-w-[150px]">
+                                {profile?.full_name || user.email?.split('@')[0]}
+                            </Link>
+                            <button onClick={handleLogout} className="text-neutral-400 hover:text-white transition-colors">
                                 Sign Out
                             </button>
                             <Link href="/buy" className="bg-white text-black px-5 py-1.5 rounded-full font-semibold hover:scale-105 transition-transform duration-200 hover:shadow-[0_0_20px_rgba(255,255,255,0.3)]">
@@ -153,7 +169,9 @@ export default function NavBar() {
                             {/* Mobile Auth UI */}
                             {user ? (
                                 <>
-                                    <div className="text-sm text-neutral-400 border-b border-white/10 pb-4">{user.email}</div>
+                                    <Link href="/profile" onClick={() => setIsMobileMenuOpen(false)} className="text-sm text-neutral-400 border-b border-white/10 pb-4">
+                                        {profile?.full_name || user.email}
+                                    </Link>
                                     <button onClick={() => { handleLogout(); setIsMobileMenuOpen(false); }} className="text-left text-neutral-400 hover:text-white border-b border-white/10 pb-4">
                                         Sign Out
                                     </button>
