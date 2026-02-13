@@ -154,7 +154,7 @@ export default function NavBar() {
                             {user ? (
                                 <>
                                     <div className="text-sm text-neutral-400 border-b border-white/10 pb-4">{user.email}</div>
-                                    <button onClick={() => { handleLogout(); setIsMobileMenuOpen(false); }} className="text-ledft text-neutral-400 hover:text-white border-b border-white/10 pb-4">
+                                    <button onClick={() => { handleLogout(); setIsMobileMenuOpen(false); }} className="text-left text-neutral-400 hover:text-white border-b border-white/10 pb-4">
                                         Sign Out
                                     </button>
                                 </>

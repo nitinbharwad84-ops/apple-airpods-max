@@ -124,12 +124,12 @@ function LoginForm() {
             animate={{ opacity: 1, scale: 1 }}
             className="w-full max-w-md"
         >
-            <div className="bg-neutral-900 border border-white/10 rounded-3xl p-8 md:p-12 shadow-2xl">
+            <div className="bg-neutral-900 border border-white/10 rounded-3xl p-6 md:p-12 shadow-2xl w-full">
                 <div className="text-center mb-8">
                     <svg className="w-12 h-12 text-white mx-auto mb-6" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M17.5,12A5.5,5.5,0,0,1,12,17.5A5.5,5.5,0,0,1,6.5,12A5.5,5.5,0,0,1,12,6.5A5.5,5.5,0,0,1,17.5,12M12,2A10,10,0,1,0,22,12,10,10,0,0,0,12,2Z" />
                     </svg>
-                    <h1 className="text-3xl font-semibold mb-2">
+                    <h1 className="text-2xl md:text-3xl font-semibold mb-2">
                         {step === "email" && "Sign In or Sign Up"}
                         {step === "otp" && "Verify Email"}
                         {step === "password" && "Create Password"}
@@ -269,13 +269,21 @@ function LoginForm() {
 
 export default function LoginPage() {
     return (
-        <main className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-6">
-            <Link href="/" className="absolute top-8 left-8 text-white/50 hover:text-white transition-colors">
-                ← Back to Store
-            </Link>
-            <Suspense fallback={<div className="text-white/50">Loading login...</div>}>
-                <LoginForm />
-            </Suspense>
+        <main className="min-h-[100dvh] bg-black text-white flex flex-col relative overflow-y-auto selection:bg-blue-500/30">
+            <div className="absolute top-6 left-6 md:top-8 md:left-8 z-20">
+                <Link href="/" className="text-sm md:text-base text-white/50 hover:text-white transition-colors flex items-center gap-2">
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                    </svg>
+                    Back to Store
+                </Link>
+            </div>
+
+            <div className="flex-1 flex flex-col items-center justify-center p-4 py-20 md:p-6 w-full">
+                <Suspense fallback={<div className="text-white/50 animate-pulse">Loading login...</div>}>
+                    <LoginForm />
+                </Suspense>
+            </div>
         </main>
     );
 }
